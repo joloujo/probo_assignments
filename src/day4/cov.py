@@ -30,10 +30,12 @@ def print_tests(m: nt.NDArray, name: str = 'm'):
     print(f'np.cov({name}):\n{np.cov(m)}\n')
     print(f'cov({name}):\n{cov(m)}\n')
 
-x = np.array([[0, 2], [1, 1], [2, 0]]).T
-print_tests(x, 'x')
 
-x = [-2.1, -1,  4.3]
-y = [3,  1.1,  0.12]
-X = np.stack((x, y), axis=0)
-print_tests(X, 'X')
+if __name__ == '__main__':
+    x = np.array([[0, 2], [1, 1], [2, 0]]).T
+    print_tests(x, 'x')
+
+    x = [-2.1, -1,  4.3]
+    y = [3,  1.1,  0.12]
+    X = np.stack((x, y), axis=0)
+    print_tests(X, 'X')
