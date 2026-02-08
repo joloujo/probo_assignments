@@ -24,9 +24,9 @@ observations = [0, 0, 1, 0, 1]
 forward: list[np.ndarray] = []
 
 for i, (action, observation) in enumerate(zip(actions, observations)):
-    unnormalized = prior @ T[action] * M[:, observation]
+    unnormalized = prior * M[:, observation]
     forward.append(unnormalized)
-    prior = unnormalized 
+    prior = unnormalized @ T[action]
 
 # Normalize the forward step state estimates
 filtered = [
@@ -37,9 +37,9 @@ filtered = [
 for i, state in enumerate(filtered): print(f'Filtered at timestep {i + 1}: {state}')
 
 """ Result:
-Filtered at timestep 1: [0.18181818 0.81818182]
-Filtered at timestep 2: [0.30769231 0.69230769]
-Filtered at timestep 3: [0.12903226 0.87096774]
-Filtered at timestep 4: [0.05031447 0.94968553]
-Filtered at timestep 5: [0.00337695 0.99662305]
+Filtered at timestep 1: [0.66666667 0.33333333]
+Filtered at timestep 2: [0.23529412 0.76470588]
+Filtered at timestep 3: [0.09302326 0.90697674]
+Filtered at timestep 4: [0.17021277 0.82978723]
+Filtered at timestep 5: [0.01161103 0.98838897]
 """
