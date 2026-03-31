@@ -10,9 +10,9 @@ class ActionT(Enum):
     stay = 4
 
 GOAL: StateT = (1, 1)
-WIDTH: int = 12
-HEIGHT: int = 12
-DISCOUNT = 0.8
+WIDTH: int = 5
+HEIGHT: int = 5
+DISCOUNT = 0.9
 CUTOFF = 1
 
 state_space = [(x, y) for x in range(WIDTH) for y in range(HEIGHT)]
@@ -42,33 +42,33 @@ def transition(state: StateT, action: ActionT, next_state: StateT) -> float:
             else:
                 return 0.0
         case ActionT.left:
-            if next_state == add_states(state, (1, 0)):
-                return 0.8
-            elif next_state == add_states(state, (-1, 0)):
-                return 0.2
-            else:
-                return 0.0
-        case ActionT.right:
             if next_state == add_states(state, (-1, 0)):
                 return 0.8
             elif next_state == add_states(state, (1, 0)):
                 return 0.2
             else:
                 return 0.0
+        case ActionT.right:
+            if next_state == add_states(state, (1, 0)):
+                return 0.8
+            elif next_state == add_states(state, (-1, 0)):
+                return 0.2
+            else:
+                return 0.0
 
 
-def reward(state: StateT, action: ActionT) -> int:
+def reward(state: StateT, action: ActionT) -> float:
     match action:
         case ActionT.stay:
-            return 100 if state == GOAL else 0
+            return 100. if state == GOAL else 0
         case ActionT.up:
-            return 100 if state == add_states(GOAL, (0, 1)) else 0
+            return 100. if state == add_states(GOAL, (0, 1)) else 0.
         case ActionT.down:
-            return 100 if state == add_states(GOAL, (0, -1)) else 0
+            return 100. if state == add_states(GOAL, (0, -1)) else 0.
         case ActionT.left:
-            return 100 if state == add_states(GOAL, (1, 0)) else 0
+            return 100. if state == add_states(GOAL, (1, 0)) else 0.
         case ActionT.right:
-            return 100 if state == add_states(GOAL, (-1, 0)) else 0
+            return 100. if state == add_states(GOAL, (-1, 0)) else 0.
 
 
 V = [0.0 for _ in state_space]
@@ -99,6 +99,21 @@ while True:
     
     V = Vhat
 
+policy: list[ActionT] = []
+
+for state in state_space:
+
+    action_values = [reward(state, action) + sum([
+        V[n] * transition(state, action, next_state)
+        for n, next_state in enumerate(state_space)
+    ])
+    for action in ActionT]
+
+    best_action = list(ActionT)[action_values.index(max(action_values))]
+
+    policy.append(best_action)
+
+
 def print_value(values: list[float]):
     value_grid = np.zeros((HEIGHT, WIDTH))
 
@@ -108,4 +123,24 @@ def print_value(values: list[float]):
 
     print(value_grid)
 
+def print_policy(values: list[ActionT]):
+    policy_lines = [[''] * WIDTH for _ in range(HEIGHT)]
+
+    action_strings: dict[ActionT, str] = {
+        ActionT.up: '   up',
+        ActionT.down: ' down',
+        ActionT.left: ' left',
+        ActionT.right: 'right',
+        ActionT.stay: ' stay',
+    }
+
+    for i, value in enumerate(values):
+        x, y = state_space[i]
+
+        policy_lines[y][x] = action_strings[value]
+
+    for line in policy_lines:
+        print(' '.join(line))
+
 print_value(V)
+print_policy(policy)
