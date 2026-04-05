@@ -9,11 +9,13 @@ class ActionT(Enum):
     right = 3
     stay = 4
 
-GOAL: StateT = (1, 1)
+GOAL: StateT = (3, 2)
 WIDTH: int = 5
 HEIGHT: int = 5
-DISCOUNT = 0.9
-CUTOFF = 1
+DISCOUNT: float = 0.9
+CUTOFF: float = 1
+REWARD: float = 10
+COST: float = -1
 
 state_space = [(x, y) for x in range(WIDTH) for y in range(HEIGHT)]
 
@@ -26,12 +28,17 @@ def add_states(a: StateT, b: StateT) -> StateT:
 def transition(state: StateT, action: ActionT, next_state: StateT) -> float:
     match action:
         case ActionT.stay:
-            return 1.0 if next_state == state else 0.0
+            if next_state == state:
+                return 0.8
+            elif next_state == add_states(state, (0, 1)) or next_state == add_states(state, (0, -1)) or next_state == add_states(state, (1, 0)) or next_state == add_states(state, (-1, 0)):
+                return 0.05
+            else:
+                return 0.0
         case ActionT.up:
             if next_state == add_states(state, (0, -1)):
-                return 0.8
+                return 0.5
             elif next_state == add_states(state, (0, 1)):
-                return 0.2
+                return 0.5
             else:
                 return 0.0
         case ActionT.down:
@@ -43,16 +50,16 @@ def transition(state: StateT, action: ActionT, next_state: StateT) -> float:
                 return 0.0
         case ActionT.left:
             if next_state == add_states(state, (-1, 0)):
-                return 0.8
+                return 0.6
             elif next_state == add_states(state, (1, 0)):
-                return 0.2
+                return 0.4
             else:
                 return 0.0
         case ActionT.right:
             if next_state == add_states(state, (1, 0)):
-                return 0.8
+                return 0.9
             elif next_state == add_states(state, (-1, 0)):
-                return 0.2
+                return 0.1
             else:
                 return 0.0
 
@@ -60,15 +67,15 @@ def transition(state: StateT, action: ActionT, next_state: StateT) -> float:
 def reward(state: StateT, action: ActionT) -> float:
     match action:
         case ActionT.stay:
-            return 100. if state == GOAL else 0
+            return REWARD if state == GOAL else COST
         case ActionT.up:
-            return 100. if state == add_states(GOAL, (0, 1)) else 0.
+            return REWARD if state == add_states(GOAL, (0, 1)) else COST
         case ActionT.down:
-            return 100. if state == add_states(GOAL, (0, -1)) else 0.
+            return REWARD if state == add_states(GOAL, (0, -1)) else COST
         case ActionT.left:
-            return 100. if state == add_states(GOAL, (1, 0)) else 0.
+            return REWARD if state == add_states(GOAL, (1, 0)) else COST
         case ActionT.right:
-            return 100. if state == add_states(GOAL, (-1, 0)) else 0.
+            return REWARD if state == add_states(GOAL, (-1, 0)) else COST
 
 
 V = [0.0 for _ in state_space]
@@ -127,11 +134,11 @@ def print_policy(values: list[ActionT]):
     policy_lines = [[''] * WIDTH for _ in range(HEIGHT)]
 
     action_strings: dict[ActionT, str] = {
-        ActionT.up: '   up',
-        ActionT.down: ' down',
-        ActionT.left: ' left',
-        ActionT.right: 'right',
-        ActionT.stay: ' stay',
+        ActionT.up: ' ^',
+        ActionT.down: ' v',
+        ActionT.left: ' <',
+        ActionT.right: ' >',
+        ActionT.stay: ' *',
     }
 
     for i, value in enumerate(values):
