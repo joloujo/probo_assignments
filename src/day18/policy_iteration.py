@@ -14,7 +14,6 @@ GOAL: StateT = (3, 2)
 WIDTH: int = 5
 HEIGHT: int = 5
 DISCOUNT: float = 0.9
-CUTOFF: float = 1
 REWARD: float = 100
 COST: float = -1
 
@@ -79,6 +78,7 @@ def reward(state: StateT, action: ActionT) -> float:
             return REWARD if state == add_states(GOAL, (-1, 0)) else COST
 
 
+policy: list[ActionT] = [ActionT.stay for _ in state_space]
 V = [0.0 for _ in state_space]
 
 i = 0
@@ -87,46 +87,43 @@ start_time = time.time()
 
 while True:
     Vhat = [
-        DISCOUNT * max([
-            reward(state, action) + sum([
-                V[n] * transition(state, action, next_state)
-                for n, next_state in enumerate(state_space)
-            ])
-            for action in ActionT]) 
-        for state in state_space]
-    
-    average_diff = sum([abs(v - vhat) for v, vhat in zip(V, Vhat)]) / len(state_space)
+        sum([
+            transition(state, policy[s], next_state) * (reward(state, policy[s]) + DISCOUNT * V[n])
+            for n, next_state in enumerate(state_space)
+        ])
+        for s, state in enumerate(state_space)
+    ]
 
+    next_policy: list[ActionT]  = []
+
+    for state in state_space:
+
+        action_values = [reward(state, action) + sum([
+            Vhat[n] * transition(state, action, next_state)
+            for n, next_state in enumerate(state_space)
+        ])
+        for action in ActionT]
+
+        best_action = list(ActionT)[action_values.index(max(action_values))]
+
+        next_policy.append(best_action)
+    
     i += 1
 
-    if average_diff < CUTOFF:
-        print(f'Finished value iteration after {i} iterations with an average change of {average_diff} on the last iteration')
-        V = Vhat
+    if policy == next_policy:
+        print(f'Finished policy iteration after {i} iterations')
+        policy = next_policy
         break
 
     if i % 10 == 0:
-        print(f'Reached iteration {i} with a current average change of {average_diff}')
+        print(f'Reached iteration {i}')
     
+    policy = next_policy
     V = Vhat
-
-policy: list[ActionT] = []
-
-for state in state_space:
-
-    action_values = [reward(state, action) + sum([
-        V[n] * transition(state, action, next_state)
-        for n, next_state in enumerate(state_space)
-    ])
-    for action in ActionT]
-
-    best_action = list(ActionT)[action_values.index(max(action_values))]
-
-    policy.append(best_action)
 
 total_seconds = (time.time() - start_time)
 
 print(f'Time taken: {total_seconds}')
-
 
 def print_value(values: list[float]):
     value_grid = np.zeros((HEIGHT, WIDTH))
